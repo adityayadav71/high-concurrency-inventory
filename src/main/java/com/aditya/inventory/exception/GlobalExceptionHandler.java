@@ -10,11 +10,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.aditya.inventory.enums.ErrorCode;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    Map<String, Object> response = new HashMap<>();
+    response.put("timestamp", LocalDateTime.now());
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+    response.put("error", "Invalid Parameter Type");
+
+    String message = String.format("Invalid value '%s' for parameter '%s'. Expected parameter of type %s",
+        ex.getValue(),
+        ex.getName(),
+        ex.getRequiredType().getSimpleName());
+
+    response.put("message", message);
+
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
   
   @ExceptionHandler(EntityValidationException.class)
   public ResponseEntity<Map<String, Object>> handleValidationException(EntityValidationException e) {
@@ -53,6 +71,21 @@ public class GlobalExceptionHandler {
     response.put("message", e.getMessage());
 
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleNotFoundException(EntityNotFoundException e) {
+    Map<String, Object> response = new HashMap<>();
+    
+    ZoneId systemZone = ZoneId.systemDefault();
+
+    response.put("timestamp", LocalDateTime.now(systemZone));
+    response.put("status", HttpStatus.NOT_FOUND.value());
+    response.put("code", ErrorCode.NOT_FOUND);
+    response.put("error", "Data Not Found Error");
+    response.put("message", e.getMessage());
+
+    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(NotNullException.class)
