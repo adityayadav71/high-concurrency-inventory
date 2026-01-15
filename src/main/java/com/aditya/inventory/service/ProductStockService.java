@@ -2,35 +2,81 @@ package com.aditya.inventory.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.aditya.inventory.enums.ErrorCode;
+import com.aditya.inventory.exception.EntityNotFoundException;
 import com.aditya.inventory.exception.EntityValidationException;
 import com.aditya.inventory.exception.NotNullException;
 import com.aditya.inventory.model.ProductStock;
 import com.aditya.inventory.repository.ProductStockRepository;
 
+import jakarta.persistence.EntityManager;
+
 @Service
 public class ProductStockService {
+
+  EntityManager entityManager;
     
   ProductStockRepository productStockRepository;
 
-  public ProductStockService(ProductStockRepository productStockRepository) {
+  public ProductStockService(ProductStockRepository productStockRepository, EntityManager entityManager) {
     this.productStockRepository = productStockRepository;
+    this.entityManager = entityManager;
   }
 
   /**
-   * This method returns a sequenced list of all ProductStock records stored in the ProductStockRepository.
-   * Each element in the list collection can be uniquely identified by either its "sku" or its "id".
+   * This method returns a sequenced list of all ProductStock records stored in
+   * the ProductStockRepository.
+   * Each element in the list collection can be uniquely identified by either its
+   * "sku" or its "id".
    * 
-   * @return a {@link java.util.List} of all {@link com.aditya.inventory.model.ProductStock} in no particular order.
-   * Returns an empty list when no ProductStocks found in the repository
+   * @return a {@link java.util.List} of all
+   *         {@link com.aditya.inventory.model.ProductStock} in no particular
+   *         order.
+   *         Returns an empty list when no ProductStocks found in the repository
    */ 
   public List<ProductStock> getAllProductStocks() {
     List<ProductStock> productStocks = this.productStockRepository.findAll();
     
     return productStocks;
+  }
+
+  /**
+   * This method finds the ProductStock record by the given sku.
+   * 
+   * @return {@link com.aditya.inventory.model.ProductStock}.
+   * @throws EntityNotFoundException when no ProductStock with the given sku could be found in the repository.
+   */
+  public ProductStock getProductStockBySku(String sku) {
+    Optional<ProductStock> productStockOptional = this.productStockRepository.findBySku(sku);
+
+    if(!productStockOptional.isPresent()) throw new EntityNotFoundException("Could not find product stock with the sku: " + sku + " in the inventory. Please check GET /productStocks to retrieve available product stocks.", ErrorCode.NOT_FOUND);
+
+    ProductStock productStock = productStockOptional.get();
+
+    return productStock;
+  }
+
+  /**
+   * This method returns the current available quantity of the ProductStock record found by the given sku 
+   * in the inventory.
+   * 
+   * @return Quantity as an Integer value.
+   * @throws EntityNotFoundException when no ProductStock with the given sku could be found in the repository.
+   */
+  public Integer getProductStockQuantityBySku(String sku) {
+    Optional<ProductStock> productStockOptional = this.productStockRepository.findBySku(sku);
+
+    if(!productStockOptional.isPresent()) throw new EntityNotFoundException("Could not find product stock with the sku: " + sku + " in the inventory. Please check GET /productStocks to retrieve available product stocks.", ErrorCode.NOT_FOUND);
+
+    ProductStock productStock = productStockOptional.get();
+
+    Integer productStockQuantity = productStock.getQuantity();
+
+    return productStockQuantity;
   }
     
   /**
