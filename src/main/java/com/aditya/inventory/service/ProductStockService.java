@@ -19,7 +19,7 @@ import jakarta.persistence.EntityManager;
 public class ProductStockService {
 
   EntityManager entityManager;
-    
+
   ProductStockRepository productStockRepository;
 
   public ProductStockService(ProductStockRepository productStockRepository, EntityManager entityManager) {
@@ -37,10 +37,10 @@ public class ProductStockService {
    *         {@link com.aditya.inventory.model.ProductStock} in no particular
    *         order.
    *         Returns an empty list when no ProductStocks found in the repository
-   */ 
+   */
   public List<ProductStock> getAllProductStocks() {
     List<ProductStock> productStocks = this.productStockRepository.findAll();
-    
+
     return productStocks;
   }
 
@@ -78,46 +78,89 @@ public class ProductStockService {
 
     return productStockQuantity;
   }
-    
+
   /**
    * This method saves the provided ProductStock entity to the repository.
    * 
    * @return the created {@link com.aditya.inventory.model.ProductStock} record,
-   * returns null when the repository failed to save..
-   */ 
+   *         returns null when the repository failed to save..
+   */
   public ProductStock createProductStock(ProductStock productStock) {
     this.validateProductStock(productStock);
 
     return this.productStockRepository.save(productStock);
   }
 
-  public void validateProductStock(ProductStock productStock) throws NotNullException, EntityValidationException {     
+  public void validateProductStock(ProductStock productStock) throws NotNullException, EntityValidationException {
     BigDecimal zero = BigDecimal.valueOf(0.00);
     BigDecimal stockPrice = productStock.getPrice();
     Integer stockQuantity = productStock.getQuantity();
 
     // 1. NULL value handling
-    if(stockPrice == null) {
+    if (stockPrice == null) {
       throw new NotNullException("Stock price is required but no value found.");
     }
 
-    if(stockQuantity == null) {
+    if (stockQuantity == null) {
       throw new NotNullException("Stock quantity is required but no value found.");
     }
 
     // 2. NEGATIVE value handling
-    if(stockPrice.compareTo(zero) < 0) {
+    if (stockPrice.compareTo(zero) < 0) {
       throw new EntityValidationException("Stock price cannot be less than zero.", ErrorCode.INVALID_PRICE);
     }
-    
-    if(stockQuantity < 0) {
+
+    if (stockQuantity < 0) {
       throw new EntityValidationException("Stock quantity cannot be less than zero.", ErrorCode.INVALID_QUANTITY);
     }
 
     // 3. ZERO value handling
-    if(stockPrice.equals(zero)) {
+    if (stockPrice.equals(zero)) {
       throw new EntityValidationException("Stock price needs to be greater than zero", ErrorCode.MISSING_PRICE);
     }
 
   }
+
+  /**
+   * This method increases the current quantity value of the given ProductStock
+   * identified by its SKU by an "increase" amount provided.
+   * 
+   * @param sku   the sku value of the ProductStock in the inventory
+   * @param delta the value of the quantity to increase/decrease the ProductStock by, can be a negative or a positive integer value
+   * @return the updated {@link com.aditya.inventory.model.ProductStock} record
+   */
+  public ProductStock increaseProductStockQuantity(String sku, Integer delta) {
+    if(delta == null) {
+      throw new NotNullException("Delta is missing or null in the path variables");
+    }
+
+    Optional<ProductStock> productStockOptional = this.productStockRepository.findBySku(sku);
+
+    // Product Stock with given SKU not found - throw business exception
+    if(!productStockOptional.isPresent()) {
+      throw new EntityNotFoundException(
+        "Couldn't find product stock with sku: " + sku + ". Please recheck SKU value using GET /productStocks to retreive available product stocks.", 
+        ErrorCode.NOT_FOUND
+      );
+    }
+    
+    ProductStock productStock = productStockOptional.get();
+    
+    // Calculate the new stock quantity after addition of the given delta to the original quantity
+    Integer originalStockQuantity = productStock.getQuantity();
+    Integer newStockQuantity = originalStockQuantity + delta;
+    
+    if (newStockQuantity < 0) {
+      throw new EntityValidationException(
+        "Invalid delta provided. Resulting quantity: [" + newStockQuantity + "] is negative after addition of delta ["+ delta +"] to the original quantity: [" + originalStockQuantity + "]",
+        ErrorCode.INVALID_DATA
+      );
+    }
+
+    // Update product stock quantity if it passed the negative validation check      
+    productStock.setQuantity(newStockQuantity);
+
+    return this.productStockRepository.save(productStock);
+  }
+
 }
