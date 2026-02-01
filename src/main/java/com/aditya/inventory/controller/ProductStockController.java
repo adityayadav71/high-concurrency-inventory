@@ -1,6 +1,5 @@
 package com.aditya.inventory.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,38 +31,33 @@ public class ProductStockController {
   public StandardResponse<List<ProductStock>> getProductStocks() {
     List<ProductStock> productStocks = this.productStockService.getAllProductStocks();
 
-    LocalDateTime timestamp = LocalDateTime.now();
-    
-    return new StandardResponse<List<ProductStock>>(true, "All product stocks in the inventory have been retrieved successfully.", timestamp, productStocks);
+    return new StandardResponse<List<ProductStock>>(true,
+        "All product stocks in the inventory have been retrieved successfully.", productStocks);
   } 
 
   @GetMapping("/{sku}")
   public StandardResponse<ProductStock> getProductStock(@PathVariable String sku) {
     ProductStock productStock = this.productStockService.getProductStockBySku(sku);
 
-    LocalDateTime timestamp = LocalDateTime.now();
-
-    return new StandardResponse<ProductStock>(true, "Stock with sku: " + sku + " retrieved successfully.", timestamp, productStock);
+    return new StandardResponse<ProductStock>(true, "Stock with sku: " + sku + " retrieved successfully.", productStock);
   } 
  
   @GetMapping("/{sku}/quantity")
   public StandardResponse<ProductStockQuantityDto> getProductStockQuantity(@PathVariable String sku) {
     Integer productStockQuantity = this.productStockService.getProductStockQuantityBySku(sku);
 
-    LocalDateTime timestamp = LocalDateTime.now();
-
     ProductStockQuantityDto stockQuantityResponse = new ProductStockQuantityDto(sku, productStockQuantity);
 
-    return new StandardResponse<ProductStockQuantityDto>(true, "Stock quantity for sku: " + sku + " retrieved successfully", timestamp, stockQuantityResponse);
+    return new StandardResponse<ProductStockQuantityDto>(true,
+        "Stock quantity for sku: " + sku + " retrieved successfully", stockQuantityResponse);
   } 
   
   @PostMapping
   public StandardResponse<ProductStock> createProductStock(@RequestBody ProductStock productStock) {
     ProductStock createdStock = this.productStockService.createProductStock(productStock);
 
-    LocalDateTime timestamp = LocalDateTime.now();
-
-    return new StandardResponse<ProductStock>(true, "Product stock created with sku: " + createdStock.getSku() + " successfully.", timestamp, createdStock);
+    return new StandardResponse<ProductStock>(true,
+        "Product stock created with sku: " + createdStock.getSku() + " successfully.", createdStock);
   } 
   
   @PatchMapping("/quantity/{sku}/{delta}")

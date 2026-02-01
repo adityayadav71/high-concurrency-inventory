@@ -9,10 +9,10 @@ public class StandardResponse<T> {
   private LocalDateTime timestamp;
   private T data;
 
-  public StandardResponse(boolean success, String message, LocalDateTime timestamp, T data) {
+  public StandardResponse(boolean success, String message, T data) {
     this.success = success;
     this.message = message;
-    this.timestamp = timestamp;
+    this.timestamp = LocalDateTime.now();
     this.data = data;
   }
 
