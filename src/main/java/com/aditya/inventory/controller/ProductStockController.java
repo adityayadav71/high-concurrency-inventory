@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aditya.inventory.dto.ProductStockQuantityDto;
+import com.aditya.inventory.dto.ProductStockQuantityModifyDto;
 import com.aditya.inventory.model.ProductStock;
 import com.aditya.inventory.service.ProductStockService;
 import com.aditya.inventory.util.StandardResponse;
@@ -33,15 +34,15 @@ public class ProductStockController {
 
     return new StandardResponse<List<ProductStock>>(true,
         "All product stocks in the inventory have been retrieved successfully.", productStocks);
-  } 
+  }
 
   @GetMapping("/{sku}")
   public StandardResponse<ProductStock> getProductStock(@PathVariable String sku) {
     ProductStock productStock = this.productStockService.getProductStockBySku(sku);
 
     return new StandardResponse<ProductStock>(true, "Stock with sku: " + sku + " retrieved successfully.", productStock);
-  } 
- 
+  }
+
   @GetMapping("/{sku}/quantity")
   public StandardResponse<ProductStockQuantityDto> getProductStockQuantity(@PathVariable String sku) {
     Integer productStockQuantity = this.productStockService.getProductStockQuantityBySku(sku);
@@ -50,23 +51,22 @@ public class ProductStockController {
 
     return new StandardResponse<ProductStockQuantityDto>(true,
         "Stock quantity for sku: " + sku + " retrieved successfully", stockQuantityResponse);
-  } 
-  
+  }
+
   @PostMapping
   public StandardResponse<ProductStock> createProductStock(@RequestBody ProductStock productStock) {
     ProductStock createdStock = this.productStockService.createProductStock(productStock);
 
     return new StandardResponse<ProductStock>(true,
         "Product stock created with sku: " + createdStock.getSku() + " successfully.", createdStock);
-  } 
-  
-  @PatchMapping("/quantity/{sku}/{delta}")
-  public StandardResponse<ProductStock> increaseProductStockQuantity(@PathVariable String sku, @PathVariable Integer delta) {
-    ProductStock updatedStock = this.productStockService.increaseProductStockQuantity(sku, delta);
+  }
 
-    LocalDateTime timestamp = LocalDateTime.now();
+  @PatchMapping("/{sku}/quantity")
+  public StandardResponse<ProductStock> increaseProductStockQuantity(@PathVariable String sku,
+      @RequestBody ProductStockQuantityModifyDto requestBody) {
+    ProductStock updatedStock = this.productStockService.increaseProductStockQuantity(sku, requestBody.getDelta());
 
-    return new StandardResponse<ProductStock>(true, "Stock quantity updated for sku: "+ sku + " successfully.", timestamp, updatedStock);
-  } 
-  
+    return new StandardResponse<ProductStock>(true, "Stock quantity updated for sku: " + sku + " successfully.", updatedStock);
+  }
+
 }

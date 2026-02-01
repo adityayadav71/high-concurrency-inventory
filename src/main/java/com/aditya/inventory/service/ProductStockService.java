@@ -122,8 +122,8 @@ public class ProductStockService {
   }
 
   /**
-   * This method increases the current quantity value of the given ProductStock
-   * identified by its SKU by an "increase" amount provided.
+   * This method adjusts the current quantity value of the given ProductStock
+   * (identified by its SKU) by a given "delta" amount.
    * 
    * @param sku   the sku value of the ProductStock in the inventory
    * @param delta the value of the quantity to increase/decrease the ProductStock by, can be a negative or a positive integer value
@@ -131,12 +131,12 @@ public class ProductStockService {
    */
   public ProductStock increaseProductStockQuantity(String sku, Integer delta) {
     if(delta == null) {
-      throw new NotNullException("Delta is missing or null in the path variables");
+      throw new NotNullException("Delta is missing or null");
     }
 
     Optional<ProductStock> productStockOptional = this.productStockRepository.findBySku(sku);
 
-    // Product Stock with given SKU not found - throw business exception
+    // Product Stock with given SKU not found
     if(!productStockOptional.isPresent()) {
       throw new EntityNotFoundException(
         "Couldn't find product stock with sku: " + sku + ". Please recheck SKU value using GET /productStocks to retreive available product stocks.", 
