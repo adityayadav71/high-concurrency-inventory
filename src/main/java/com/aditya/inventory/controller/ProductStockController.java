@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.aditya.inventory.dto.ProductStockQuantityDto;
 import com.aditya.inventory.dto.ProductStockQuantityModifyDto;
+import com.aditya.inventory.dto.ProductStockPurchaseDto;
+import com.aditya.inventory.enums.ErrorCode;
+import com.aditya.inventory.exception.EntityValidationException;
 import com.aditya.inventory.model.ProductStock;
 import com.aditya.inventory.service.ProductStockService;
 import com.aditya.inventory.util.StandardResponse;
@@ -69,4 +72,17 @@ public class ProductStockController {
     return new StandardResponse<ProductStock>(true, "Stock quantity updated for sku: " + sku + " successfully.", updatedStock);
   }
 
+  @PatchMapping("/{sku}/purchase")
+  public StandardResponse<ProductStock> buyProductFromProductStock(@PathVariable String sku, 
+    @RequestBody ProductStockPurchaseDto requestBody) {
+      
+    Integer quantity = requestBody.getQuantity();
+    
+    if(quantity <= 0) throw new EntityValidationException("Purchase quantity cannot be zero or a negative value.", ErrorCode.INVALID_QUANTITY);
+    ProductStock updatedStock = this.productStockService.buyProductFromProductStock(sku, quantity);
+
+    return new StandardResponse<ProductStock>(true,
+      "Bought " + quantity + (quantity > 1 ? " items" : " item") + " of " + updatedStock.getName() + " - SKU: " + updatedStock.getSku() + " Stock quantity for the same has been updated to: "+ updatedStock.getQuantity(), updatedStock
+    );
+  }
 }

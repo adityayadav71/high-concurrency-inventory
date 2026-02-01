@@ -163,4 +163,47 @@ public class ProductStockService {
     return this.productStockRepository.save(productStock);
   }
 
+  /**
+   * This method decreases the current quantity value of the given ProductStock
+   * (identified by its SKU) by the "quantity" amount provided.
+   * 
+   * @param sku   the sku value of the ProductStock in the inventory
+   * @param quantity the value of the quantity to decrease the ProductStock by, can only be a positive integer value
+   * @return the updated {@link com.aditya.inventory.model.ProductStock} record
+   */
+  public ProductStock buyProductFromProductStock(String sku, Integer quantity) {
+    if(quantity == null) {
+      throw new NotNullException("Quantity is missing or null");
+    }
+
+    Optional<ProductStock> productStockOptional = this.productStockRepository.findBySku(sku);
+
+    // Product Stock with given SKU not found - throw business exception
+    if(!productStockOptional.isPresent()) {
+      throw new EntityNotFoundException(
+        
+        "Couldn't find product stock with sku: " + sku + ". Please recheck SKU value using GET /productStocks to retreive available product stocks.", 
+        ErrorCode.NOT_FOUND
+      );
+    }
+    
+    ProductStock productStock = productStockOptional.get();
+    
+    // Calculate the new stock quantity after addition of the given delta to the original quantity
+    Integer originalStockQuantity = productStock.getQuantity();
+    Integer newStockQuantity = originalStockQuantity - quantity;
+    
+    if (newStockQuantity < 0) {
+      throw new EntityValidationException(
+        "Invalid quantity provided. Resulting quantity: [" + newStockQuantity + "] is negative after subtraction of quantity ["+ quantity +"] from the original quantity: [" + originalStockQuantity + "]",
+        ErrorCode.INVALID_DATA
+      );
+    }
+
+    // Update product stock quantity if it passed the negative validation check      
+    productStock.setQuantity(newStockQuantity);
+
+    return this.productStockRepository.save(productStock);
+  }
+
 }
